@@ -3,8 +3,22 @@ import google.generativeai as models
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # take environment variables from .env.
-API_KEY = os.getenv('API_KEY')
+# Try to load from .env
+load_dotenv()
+api_key_from_env = os.getenv('API_KEY')
+
+# Check if .env provided a valid key
+if api_key_from_env:
+    API_KEY = api_key_from_env
+    print("API key loaded from .env")
+else:
+    # Fall back to Streamlit secrets
+    if st.secrets is not None and "API_KEY" in st.secrets:
+        API_KEY = st.secrets["API_KEY"]
+        print("API key loaded from Streamlit secrets")
+    else:
+        API_KEY = None  # Or raise an error, depending on your needs
+        print("Error: API key not found in .env or Streamlit secrets")
 # Set your Google Generative AI API Key
 models.configure(api_key=API_KEY)
 
