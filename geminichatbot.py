@@ -1,24 +1,38 @@
-import streamlit as st
-import google.generativeai as models
 import os
 from dotenv import load_dotenv
+import streamlit as st
+from github_secret import get_secret
 
-# Try to load from .env
-load_dotenv()
-api_key_from_env = os.getenv('API_KEY')
-
-# Check if .env provided a valid key
-if api_key_from_env:
-    API_KEY = api_key_from_env
-    print("API key loaded from .env")
-else:
+def get_api_key():
+    # Try to load from .env
+    load_dotenv()
+    api_key_from_env = os.getenv('API_KEY')
+    
+    # Check if .env provided a valid key
+    if api_key_from_env:
+        print("API key loaded from .env")
+        return api_key_from_env
+    
     # Fall back to Streamlit secrets
     if st.secrets is not None and "API_KEY" in st.secrets:
-        API_KEY = st.secrets["API_KEY"]
         print("API key loaded from Streamlit secrets")
-    else:
-        API_KEY = None  # Or raise an error, depending on your needs
-        print("Error: API key not found in .env or Streamlit secrets")
+        return st.secrets["API_KEY"]
+    
+    # Fall back to GitHub secrets
+    try:
+        github_api_key = get_secret('API_KEY', 'your_github_username', 'your_repo_name')
+        if github_api_key:
+            print("API key loaded from GitHub secrets")
+            return github_api_key
+    except Exception as e:
+        print(f"Error fetching from GitHub secrets: {str(e)}")
+    
+    # If we've reached here, no valid API key was found
+    print("Error: API key not found in .env, Streamlit secrets, or GitHub secrets")
+    return None
+
+# Usage
+API_KEY = get_api_key()
 
 # Set your Google Generative AI API Key
 models.configure(api_key=API_KEY)
